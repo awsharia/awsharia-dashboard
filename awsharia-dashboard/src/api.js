@@ -5,20 +5,23 @@ export async function fetchSheets(sheetId, apiKey, range) {
   return r.json();
 }
 
+export async function fetchStripe() {
+  const r = await fetch('/api/stripe');
+  if (!r.ok) throw new Error(`Stripe proxy ${r.status}`);
+  return r.json();
+}
+
 export async function fetchKit(apiKey) {
   const headers = { 'X-Kit-Api-Key': apiKey, 'Content-Type': 'application/json' };
   const base = 'https://api.kit.com/v4';
-
   const [subRes, bcRes, seqRes] = await Promise.all([
     fetch(`${base}/subscribers?per_page=10&sort_order=desc&sort_field=created_at`, { headers }),
     fetch(`${base}/broadcasts?per_page=10`, { headers }),
     fetch(`${base}/sequences`, { headers }),
   ]);
-
   const subD = subRes.ok ? await subRes.json() : { subscribers: [] };
   const bcD  = bcRes.ok  ? await bcRes.json()  : { broadcasts: [] };
   const seqD = seqRes.ok ? await seqRes.json() : { sequences: [] };
-
   return {
     totalSubscribers: subD.pagination?.total || subD.subscribers?.length || 0,
     activeSubscribers: (subD.subscribers || []).filter(s => s.state === 'active').length,
